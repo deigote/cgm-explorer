@@ -1734,6 +1734,7 @@ footer a {
     font-size: 10px;
   }
   .no-print,
+  footer,
   .section-nav,
   .file-input,
   .session-tools,
@@ -1763,6 +1764,14 @@ footer a {
   }
   .report-heading {
     padding: 8px 0 12px;
+    display: block;
+  }
+  .report-heading::after {
+    content: "Exploración personal de datos · No es una herramienta de diagnóstico";
+    display: block;
+    margin-top: 5px;
+    font-size: 8px;
+    color: #627568;
   }
   .report-heading h1 {
     font-size: 25px;

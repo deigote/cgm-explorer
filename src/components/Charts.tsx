@@ -18,6 +18,7 @@ import {
   AriaComponent,
 } from "echarts/components";
 import { SVGRenderer } from "echarts/renderers";
+import { renderChartForPrint } from "../lib/printChart";
 import { COLORS, type CgmEvent, type Reading, type Settings } from "../types";
 import {
   dateLabel,
@@ -75,29 +76,10 @@ export function Chart({
     const preparePrint = () => {
       const instance = ref.current?.getEchartsInstance();
       if (!instance || !printHost.current) return;
-      const printable = echarts.init(null, undefined, {
-        renderer: "svg",
-        ssr: true,
-        width: 700,
+      printHost.current.innerHTML = renderChartForPrint(
+        instance.getOption(),
         height,
-      });
-      try {
-        const options = instance.getOption() as Option;
-        options.animation = false;
-        options.aria = { enabled: false };
-        if (Array.isArray(options.dataZoom)) {
-          options.dataZoom = options.dataZoom.map((zoom: Option) => ({
-            ...zoom,
-            show: false,
-          }));
-        }
-        printable.setOption(options);
-        printHost.current.innerHTML = printable.renderToSVGString({
-          useViewBox: true,
-        });
-      } finally {
-        printable.dispose();
-      }
+      );
     };
     const observer = new ResizeObserver(resize);
     if (host.current) observer.observe(host.current);
