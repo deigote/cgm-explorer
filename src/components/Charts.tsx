@@ -60,10 +60,12 @@ export function Chart({
   option,
   height = 300,
   label,
+  onEvents,
 }: {
   option: Option;
   height?: number;
   label: string;
+  onEvents?: Record<string, (event: any, instance: any) => void>;
 }) {
   const ref = useRef<ReactECharts>(null),
     host = useRef<HTMLDivElement>(null),
@@ -109,6 +111,7 @@ export function Chart({
           ...option,
         }}
         notMerge
+        onEvents={onEvents}
         opts={{ renderer: "svg" }}
         style={{ height, width: "100%" }}
       />
@@ -126,6 +129,24 @@ const tooltip = {
   extraCssText:
     "box-shadow:0 4px 20px #163b2814;line-height:1.6;max-width:300px;white-space:normal;",
 };
+// Axis hover works even when symbols are hidden. Keep the per-series formatting
+// and omit synthetic null points used to break the curve across missing data.
+export function lineTooltip(series: Option[]): Option {
+  return {
+    ...tooltip,
+    trigger: "axis",
+    triggerOn: "mousemove|click",
+    enterable: true,
+    extraCssText: tooltip.extraCssText + "max-height:240px;overflow-y:auto;",
+    axisPointer: { type: "line", axis: "x", snap: true },
+    formatter: (items: any[]) =>
+      items
+        .filter((p) => p.seriesType === "line" && p.value?.[1] != null)
+        .map((p) => series[p.seriesIndex]?.tooltip?.formatter(p))
+        .filter(Boolean)
+        .join("<br/><br/>"),
+  };
+}
 export function chartBase(
   settings: Settings,
   extent: [number, number],
@@ -226,6 +247,7 @@ export function eventSeries(
         event: e,
       })),
     tooltip: {
+      trigger: "item",
       formatter: (p: any) => {
         const e = p.data.event as CgmEvent;
         return `<strong>${esc(e.category)} · ${esc(e.label)}</strong><br/>${esc(stampLabel(e.timestamp))}<br/>${esc(e.comment)}${e.durationMin !== undefined ? `<br/>Duración: ${number(e.durationMin)} min` : ""}`;
@@ -255,6 +277,33 @@ export function Timeline({
   const base = chartBase(settings, extent, isDay);
   const first = readings[0]?.timestamp ?? dateBoundary(day || "2026-01-01"),
     last = readings.at(-1)?.timestamp ?? first;
+  const eventGuides = (start: number, end: number) => {
+    if (end - start > 2 * 1440 * MINUTE) return [];
+    let previous = -Infinity;
+    return events
+      .filter((e) => {
+        if (
+          e.timestamp < start ||
+          e.timestamp > end ||
+          e.timestamp - previous < (end - start) / 12
+        )
+          return false;
+        previous = e.timestamp;
+        return true;
+      })
+      .map((e) => ({
+        xAxis: isDay ? minuteOfDay(e.timestamp) : e.timestamp,
+        label: {
+          show: true,
+          formatter: timeLabel(e.timestamp),
+          position: "insideStartTop",
+          rotate: 90,
+          color: "#526f60",
+          fontSize: 10,
+        },
+        lineStyle: { color: "#b7c7be", type: "dotted" },
+      }));
+  };
   const series: Option[] = [
     {
       name: "Glucosa",
@@ -265,7 +314,10 @@ export function Timeline({
       connectNulls: false,
       lineStyle: { width: 1.6 },
       data: gappedData(readings, typical, settings, x),
-      markLine: thresholds(settings),
+      markLine: {
+        ...thresholds(settings),
+        data: [...thresholds(settings).data, ...eventGuides(first, last)],
+      },
       tooltip: {
         formatter: (p: any) => {
           if (p.value[1] === null) return "";
@@ -292,8 +344,9 @@ export function Timeline({
       itemStyle: { color: "#748b80" },
       data: scans.map((r) => [x(r), convert(r.glucose, settings.unit)]),
       tooltip: {
+        trigger: "item",
         formatter: (p: any) =>
-          `Escaneo · ${esc(stampLabel(p.value[0]))}<br/>${number(p.value[1])} ${settings.unit}`,
+          `Escaneo · ${esc(stampLabel(isDay ? dateBoundary(day!) + p.value[0] * MINUTE : p.value[0]))}<br/>${number(p.value[1])} ${settings.unit}`,
       },
     });
   const durations = events
@@ -314,31 +367,25 @@ export function Timeline({
     };
   const option = {
     ...base,
+    useUTC: true,
+    tooltip: lineTooltip(series),
     grid: { ...base.grid, bottom: isDay ? 30 : 62 },
     xAxis: {
       ...base.xAxis,
+      type: isDay ? "value" : "time",
       min: isDay ? 0 : first === last ? first - 5 * MINUTE : first,
       max: isDay ? 1440 : first === last ? last + 5 * MINUTE : last,
-      interval: isDay
-        ? 180
-        : last - first <= 2 * 60 * MINUTE
-          ? 5 * MINUTE
-          : last - first <= 12 * 60 * MINUTE
-            ? 60 * MINUTE
-            : last - first <= 3 * 24 * 60 * MINUTE
-              ? 6 * 60 * MINUTE
-              : Math.max(
-                  1,
-                  Math.ceil((last - first) / (10 * 24 * 60 * MINUTE)),
-                ) *
-                24 *
-                60 *
-                MINUTE,
+      ...(isDay
+        ? { interval: 120 }
+        : { splitNumber: 12, minInterval: 5 * MINUTE }),
       axisLabel: {
-        formatter: (v: number) =>
+        showMinLabel: true,
+        formatter: (v: number, index: number) =>
           isDay
             ? `${String(Math.floor(v / 60)).padStart(2, "0")}:00`
-            : `${dateLabel(v)}\n${timeLabel(v)}`,
+            : index === 0 || minuteOfDay(v) === 0
+              ? `${dateLabel(v)}\n${timeLabel(v)}`
+              : timeLabel(v),
         hideOverlap: true,
       },
     },
@@ -365,6 +412,30 @@ export function Timeline({
   return (
     <Chart
       option={option}
+      onEvents={
+        !isDay
+          ? {
+              datazoom: (event, instance) => {
+                const zoom = event.batch?.[0] ?? event;
+                const start = first + ((last - first) * zoom.start) / 100;
+                const end = first + ((last - first) * zoom.end) / 100;
+                instance.setOption({
+                  series: [
+                    {
+                      markLine: {
+                        ...thresholds(settings),
+                        data: [
+                          ...thresholds(settings).data,
+                          ...eventGuides(start, end),
+                        ],
+                      },
+                    },
+                  ],
+                });
+              },
+            }
+          : undefined
+      }
       height={isDay ? 155 : 330}
       label={
         isDay

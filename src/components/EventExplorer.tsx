@@ -9,7 +9,7 @@ import {
   glucoseLabel,
   number,
 } from "../lib/presentation";
-import { Chart, chartBase, gappedData } from "./Charts";
+import { Chart, chartBase, gappedData, lineTooltip } from "./Charts";
 import { Section } from "./Section";
 export function EventExplorer({
   readings,
@@ -103,7 +103,7 @@ export function EventExplorer({
       ),
       tooltip: {
         formatter: (p: any) =>
-          `${esc(e.label)} · ${esc(dateLabel(e.timestamp))}<br/>${number(p.value[0])} min · <b>${number(p.value[1])} ${settings.unit}</b>`,
+          `${esc(e.label)} · ${esc(stampLabel(e.timestamp + p.value[0] * MINUTE))}<br/>${number(p.value[0])} min · <b>${number(p.value[1], 1)} ${settings.unit}</b>`,
       },
       ...(i === 0
         ? {
@@ -142,14 +142,26 @@ export function EventExplorer({
       });
     return {
       ...base,
-      grid: { ...base.grid, bottom: 48 },
+      tooltip: lineTooltip(series),
+      grid: { ...base.grid, bottom: compare ? 48 : 65 },
       xAxis: {
         ...base.xAxis,
         min: before,
         max: after,
-        name: "Minutos desde el evento",
+        interval: 30,
+        axisLabel: {
+          ...base.xAxis.axisLabel,
+          hideOverlap: true,
+          formatter: (v: number) =>
+            !compare && selected
+              ? `${timeLabel(selected.timestamp + v * MINUTE)}\n${v > 0 ? "+" : ""}${v} min`
+              : `${v > 0 ? "+" : ""}${v}`,
+        },
+        name: compare
+          ? "Minutos desde el evento"
+          : "Hora · minutos desde el evento",
         nameLocation: "middle",
-        nameGap: 30,
+        nameGap: compare ? 30 : 45,
       },
       series,
     };
