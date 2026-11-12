@@ -1699,7 +1699,31 @@ footer a {
   size: A4 portrait;
   margin: 12mm;
 }
+.chart-print {
+  display: none;
+}
 @media print {
+  .chart-screen {
+    display: none !important;
+  }
+  .chart-print {
+    display: block;
+  }
+  .chart-print svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  #events,
+  #days {
+    break-before: page;
+  }
+  .section-heading {
+    break-after: avoid;
+  }
+  .daily-table-wrap {
+    break-inside: avoid;
+  }
   html,
   body,
   :root {

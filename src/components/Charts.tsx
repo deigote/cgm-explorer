@@ -65,22 +65,54 @@ export function Chart({
   label: string;
 }) {
   const ref = useRef<ReactECharts>(null),
-    host = useRef<HTMLDivElement>(null);
+    host = useRef<HTMLDivElement>(null),
+    printHost = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const resize = () => ref.current?.getEchartsInstance().resize();
+    // Printing must not depend on the screen viewport or on asynchronous
+    // ResizeObserver callbacks. Render a separate, fixed-width vector copy
+    // synchronously before the browser paginates, then scale its viewBox.
+    const preparePrint = () => {
+      const instance = ref.current?.getEchartsInstance();
+      if (!instance || !printHost.current) return;
+      const printable = echarts.init(null, undefined, {
+        renderer: "svg",
+        ssr: true,
+        width: 700,
+        height,
+      });
+      try {
+        const options = instance.getOption() as Option;
+        options.animation = false;
+        options.aria = { enabled: false };
+        if (Array.isArray(options.dataZoom)) {
+          options.dataZoom = options.dataZoom.map((zoom: Option) => ({
+            ...zoom,
+            show: false,
+          }));
+        }
+        printable.setOption(options);
+        printHost.current.innerHTML = printable.renderToSVGString({
+          useViewBox: true,
+        });
+      } finally {
+        printable.dispose();
+      }
+    };
     const observer = new ResizeObserver(resize);
     if (host.current) observer.observe(host.current);
-    window.addEventListener("beforeprint", resize);
+    window.addEventListener("beforeprint", preparePrint);
     window.addEventListener("afterprint", resize);
     return () => {
       observer.disconnect();
-      window.removeEventListener("beforeprint", resize);
+      window.removeEventListener("beforeprint", preparePrint);
       window.removeEventListener("afterprint", resize);
     };
-  }, []);
+  }, [height]);
   return (
     <div ref={host} className="chart" role="img" aria-label={label}>
       <ReactECharts
+        className="chart-screen"
         ref={ref}
         echarts={echarts}
         option={{
@@ -98,6 +130,7 @@ export function Chart({
         opts={{ renderer: "svg" }}
         style={{ height, width: "100%" }}
       />
+      <div ref={printHost} className="chart-print" aria-hidden="true" />
     </div>
   );
 }
@@ -304,7 +337,21 @@ export function Timeline({
       ...base.xAxis,
       min: isDay ? 0 : first === last ? first - 5 * MINUTE : first,
       max: isDay ? 1440 : first === last ? last + 5 * MINUTE : last,
-      interval: isDay ? 180 : undefined,
+      interval: isDay
+        ? 180
+        : last - first <= 2 * 60 * MINUTE
+          ? 5 * MINUTE
+          : last - first <= 12 * 60 * MINUTE
+            ? 60 * MINUTE
+            : last - first <= 3 * 24 * 60 * MINUTE
+              ? 6 * 60 * MINUTE
+              : Math.max(
+                  1,
+                  Math.ceil((last - first) / (10 * 24 * 60 * MINUTE)),
+                ) *
+                24 *
+                60 *
+                MINUTE,
       axisLabel: {
         formatter: (v: number) =>
           isDay
