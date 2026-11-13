@@ -19,7 +19,13 @@ import {
 } from "echarts/components";
 import { SVGRenderer } from "echarts/renderers";
 import { renderChartForPrint } from "../lib/printChart";
-import { COLORS, type CgmEvent, type Reading, type Settings } from "../types";
+import {
+  INTENSITY_COLORS,
+  COLORS,
+  type CgmEvent,
+  type Reading,
+  type Settings,
+} from "../types";
 import {
   dateLabel,
   dateBoundary,
@@ -245,12 +251,15 @@ export function eventSeries(
           convert(extent[1] - (extent[1] - extent[0]) * 0.06, s.unit),
         ],
         event: e,
+        itemStyle: {
+          color: e.intensity ? INTENSITY_COLORS[e.intensity] : "#314c41",
+        },
       })),
     tooltip: {
       trigger: "item",
       formatter: (p: any) => {
         const e = p.data.event as CgmEvent;
-        return `<strong>${esc(e.category)} · ${esc(e.label)}</strong><br/>${esc(stampLabel(e.timestamp))}<br/>${esc(e.comment)}${e.durationMin !== undefined ? `<br/>Duración: ${number(e.durationMin)} min` : ""}`;
+        return `<strong>${esc(e.category)} · ${esc(e.label)}</strong><br/>${esc(stampLabel(e.timestamp))}<br/>${esc(e.comment)}${e.intensity ? `<br/>Intensidad: ${e.intensity}` : ""}${e.durationMin !== undefined ? `<br/>Duración: ${number(e.durationMin)} min` : ""}`;
       },
     },
   }));

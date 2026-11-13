@@ -177,6 +177,20 @@ describe("Reloj local del dispositivo", () => {
   });
 });
 describe("Eventos", () => {
+  it("importa intensidad opcional sin perder eventos con valores desconocidos", () => {
+    const result = parseEvents(
+      "timestamp,category,intensity\n11-11-2026 08:30,Comida,Suave\n11-11-2026 09:30,Comida,media\n11-11-2026 10:30,Actividad,alta\n11-11-2026 11:30,Comida,otra\n11-11-2026 12:30,Comida,",
+    );
+    expect(result.events.map((e) => e.intensity)).toEqual([
+      "suave",
+      "media",
+      "alta",
+      undefined,
+      undefined,
+    ]);
+    expect(result.invalid).toBe(0);
+    expect(result.warnings).toHaveLength(1);
+  });
   it("acepta columnas mínimas, categorías libres y comas entrecomilladas", () => {
     const d = parseEvents(
       'timestamp,category,comment\n11-11-2026 08:30,Frío,"Baño, 3 minutos"',

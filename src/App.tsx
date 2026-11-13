@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   COLORS,
+  INTENSITY_COLORS,
   DEFAULTS,
   type DateOrder,
+  type EventIntensity,
   type Session,
   type Settings,
 } from "./types";
@@ -297,6 +299,26 @@ export default function App() {
     } finally {
       setBusy(false);
       if (eventInput.current) eventInput.current.value = "";
+    }
+  }
+  async function updateEventIntensity(id: string, intensity?: EventIntensity) {
+    if (!session || busy) return;
+    setBusy(true);
+    const next = {
+      ...session,
+      events: session.events.map((e) =>
+        e.id === id ? { ...e, intensity } : e,
+      ),
+    };
+    setSession(next);
+    try {
+      if (!demo) await saveSession(next);
+    } catch {
+      setNotice(
+        "La intensidad se ha actualizado, pero no se ha podido guardar en este navegador.",
+      );
+    } finally {
+      setBusy(false);
     }
   }
   async function erase() {
@@ -916,6 +938,14 @@ export default function App() {
                       ● Comida <span>▲ Actividad física</span>
                       <span>◆ Misc</span>
                       <span>■ Otras categorías</span>
+                      {Object.entries(INTENSITY_COLORS).map(
+                        ([level, color]) => (
+                          <span key={level}>
+                            <b style={{ color }}>●</b> Intensidad {level}
+                          </span>
+                        ),
+                      )}
+                      <span>● Sin intensidad indicada</span>
                     </p>
                   )}
                 </Section>
@@ -1050,6 +1080,8 @@ export default function App() {
                 {session.events.length > 0 ? (
                   <EventExplorer
                     key={`events-${start}-${end}`}
+                    onIntensityChange={updateEventIntensity}
+                    saving={busy}
                     readings={filtered}
                     events={filteredEvents}
                     settings={settings}

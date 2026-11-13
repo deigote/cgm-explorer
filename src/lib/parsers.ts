@@ -1,3 +1,4 @@
+import type { EventIntensity } from "../types";
 import Papa from "papaparse";
 import type {
   CgmEvent,
@@ -182,6 +183,24 @@ export function parseEvents(
       warnings.push(
         "En los eventos ISO se conserva la hora escrita, sin aplicar el huso horario. Debe coincidir con la hora del dispositivo.",
       );
+    const rawIntensity = val(row, idx("intensity")).toLowerCase();
+    const intensity: EventIntensity | undefined = [
+      "suave",
+      "media",
+      "alta",
+    ].includes(rawIntensity)
+      ? (rawIntensity as EventIntensity)
+      : undefined;
+    if (
+      rawIntensity &&
+      !intensity &&
+      !warnings.includes(
+        "Intensidades desconocidas conservadas como sin indicar. Usa suave, media o alta.",
+      )
+    )
+      warnings.push(
+        "Intensidades desconocidas conservadas como sin indicar. Usa suave, media o alta.",
+      );
     const comment = val(row, idx("comment")),
       label =
         val(row, idx("label")) ||
@@ -192,6 +211,7 @@ export function parseEvents(
       label,
       comment,
       durationMin,
+      intensity,
     ]);
     if (seen.has(key)) {
       duplicates++;
@@ -205,6 +225,7 @@ export function parseEvents(
       label: label || "Sin etiqueta",
       comment,
       durationMin,
+      intensity,
     });
   }
   if (!events.length)

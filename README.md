@@ -33,7 +33,7 @@ El ejemplo en `tests/fixtures/example.csv` se ha recreado con los valores enumer
 
 ## Eventos
 
-Carga un CSV opcional con `timestamp`, `category` y `comment`. `label` y `duration_min` son opcionales; cualquier categoría es válida. Una etiqueta identifica eventos repetidos. Sin etiqueta, se usa el comentario si tiene hasta 80 caracteres.
+Carga un CSV opcional con `timestamp`, `category` y `comment`. `label`, `duration_min` e `intensity` son opcionales; cualquier categoría es válida. Una etiqueta identifica eventos repetidos. Sin etiqueta, se usa el comentario si tiene hasta 80 caracteres.
 
 ```csv
 timestamp,category,label,comment,duration_min
@@ -41,6 +41,8 @@ timestamp,category,label,comment,duration_min
 11-11-2026 18:00,Actividad Física,Fuerza,Entrenamiento,65
 11-11-2026 20:15,Misc,Sauna,Sauna 40 minutos,40
 ```
+
+`intensity` acepta `suave`, `media` o `alta`: verde, amarillo y rojo en los marcadores de eventos. Si está vacío, se conserva el color neutro. Los valores desconocidos generan un aviso y se importan sin intensidad. También puedes editarla en la tabla; se guarda con la última importación. Es una valoración personal, no una estimación calculada de carga glucémica o calórica.
 
 Hay una [plantilla descargable](public/eventos-plantilla.csv) en la aplicación. Filtra por categoría, etiqueta, fecha o texto y selecciona un evento; activa «Comparar repeticiones» para superponer los eventos con la misma categoría y etiqueta dentro del filtro. Las métricas de comidas usan ventanas fijas aunque cambies la ventana visual.
 

@@ -8,6 +8,12 @@ export interface Reading {
   source: "historic" | "scan";
   sensorId: string;
 }
+export type EventIntensity = "suave" | "media" | "alta";
+export const INTENSITY_COLORS = {
+  suave: "#34875a",
+  media: "#d6ad24",
+  alta: "#cf4a43",
+};
 export interface CgmEvent {
   id: string;
   timestamp: number;
@@ -15,6 +21,7 @@ export interface CgmEvent {
   label: string;
   comment: string;
   durationMin?: number;
+  intensity?: EventIntensity;
 }
 export interface ImportResult {
   readings: Reading[];

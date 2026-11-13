@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { CgmEvent, Reading, Settings } from "../types";
+import type { CgmEvent, EventIntensity, Reading, Settings } from "../types";
 import { analyzeEvent, repeatedMedian } from "../lib/eventAnalysis";
 import { windowReadings } from "../lib/metrics";
 import { dateKey, dateLabel, MINUTE, stampLabel, timeLabel } from "../lib/time";
@@ -17,12 +17,16 @@ export function EventExplorer({
   settings,
   extent,
   typical,
+  onIntensityChange,
+  saving,
 }: {
   readings: Reading[];
   events: CgmEvent[];
   settings: Settings;
   extent: [number, number];
   typical: number;
+  onIntensityChange: (id: string, intensity?: EventIntensity) => void;
+  saving: boolean;
 }) {
   const [category, setCategory] = useState(""),
     [label, setLabel] = useState(""),
@@ -197,6 +201,11 @@ export function EventExplorer({
       title="Eventos"
       note="Explora una respuesta o superpón las repeticiones de una misma etiqueta."
     >
+      <p className="chart-note no-print">
+        Intensidad indicada por ti: suave, media o alta. En comidas representa
+        tu valoración de la carga de la comida; no se calcula a partir de la
+        glucosa ni de las calorías.
+      </p>
       <div className="filters no-print">
         <label>
           Categoría
@@ -274,6 +283,7 @@ export function EventExplorer({
               <th>Hora</th>
               <th>Categoría</th>
               <th>Etiqueta</th>
+              <th>Intensidad</th>
               <th>Comentario</th>
             </tr>
           </thead>
@@ -296,6 +306,25 @@ export function EventExplorer({
                   >
                     {e.label}
                   </button>
+                </td>
+                <td>
+                  <select
+                    aria-label={`Intensidad de ${e.label}, ${stampLabel(e.timestamp)}`}
+                    value={e.intensity || ""}
+                    disabled={saving}
+                    onChange={(change) =>
+                      onIntensityChange(
+                        e.id,
+                        (change.target.value || undefined) as
+                          EventIntensity | undefined,
+                      )
+                    }
+                  >
+                    <option value="">Sin indicar</option>
+                    <option value="suave">Suave</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                  </select>
                 </td>
                 <td>
                   {e.comment}
