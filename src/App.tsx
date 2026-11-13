@@ -38,6 +38,7 @@ import { bandLabels, glucoseLabel, number, percent } from "./lib/presentation";
 import { Agp, Heatmap, Hourly, Timeline } from "./components/Charts";
 import { EmptyChart, Section } from "./components/Section";
 import { EventExplorer } from "./components/EventExplorer";
+import { ReportContext } from "./components/ReportContext";
 import { DailyReport } from "./components/DailyReport";
 
 function Logo() {
@@ -632,6 +633,7 @@ export default function App() {
                     : "Guardado solo en este navegador"}
               </span>
             </div>
+            <ReportContext />
             <div className="control-bar no-print">
               <div
                 className="range-buttons"

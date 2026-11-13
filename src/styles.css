@@ -1969,3 +1969,89 @@ footer a {
   height: 8px;
   border-radius: 2px;
 }
+
+.report-context {
+  margin: 12px 0 20px;
+}
+.report-context details {
+  border: 1px solid #e0e6e3;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+.report-context summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: #526f60;
+}
+.report-context summary span {
+  font-weight: normal;
+  color: #738179;
+}
+.report-context-note {
+  font-size: 12px;
+  color: #627568;
+  margin: 12px 0;
+}
+.report-context-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+}
+.report-context-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+.report-context-fields input,
+.report-context-fields select {
+  width: 100%;
+  min-width: 0;
+}
+.report-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+}
+.report-context-actions small {
+  color: #627568;
+  font-size: 11px;
+}
+.report-context-print {
+  display: none;
+}
+@media print {
+  .report-context {
+    margin: 0;
+  }
+  .report-context-print {
+    display: block;
+    break-inside: avoid;
+    margin: 8px 0 12px;
+    padding: 10px 12px;
+    border: 1px solid #dfe5e1;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  .report-context-print dl {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    margin: 8px 0;
+  }
+  .report-context-print dt {
+    font-size: 8px;
+    color: #627568;
+  }
+  .report-context-print dd {
+    margin: 2px 0 0;
+  }
+  .report-context-print small {
+    display: block;
+    font-size: 8px;
+    color: #627568;
+  }
+}
