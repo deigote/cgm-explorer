@@ -42,7 +42,7 @@ timestamp,category,label,comment,duration_min
 11-11-2026 20:15,Misc,Sauna,Sauna 40 minutos,40
 ```
 
-`intensity` acepta `suave`, `media` o `alta`: verde, amarillo y rojo en los marcadores de eventos. Si está vacío, se conserva el color neutro. Los valores desconocidos generan un aviso y se importan sin intensidad. También puedes editarla en la tabla; se guarda con la última importación. Es una valoración personal, no una estimación calculada de carga glucémica o calórica.
+`intensity` acepta `suave`, `media` o `alta`: verde, amarillo y rojo en los marcadores de eventos. Si está vacío, se conserva el color neutro. Los valores desconocidos generan un aviso y se importan sin intensidad. Se indica únicamente en el CSV y se guarda con la última importación. Es una valoración personal, no una estimación calculada de carga glucémica o calórica.
 
 Hay una [plantilla descargable](public/eventos-plantilla.csv) en la aplicación. Filtra por categoría, etiqueta, fecha o texto y selecciona un evento; activa «Comparar repeticiones» para superponer los eventos con la misma categoría y etiqueta dentro del filtro. Las métricas de comidas usan ventanas fijas aunque cambies la ventana visual.
 

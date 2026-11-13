@@ -4,7 +4,6 @@ import {
   INTENSITY_COLORS,
   DEFAULTS,
   type DateOrder,
-  type EventIntensity,
   type Session,
   type Settings,
 } from "./types";
@@ -299,26 +298,6 @@ export default function App() {
     } finally {
       setBusy(false);
       if (eventInput.current) eventInput.current.value = "";
-    }
-  }
-  async function updateEventIntensity(id: string, intensity?: EventIntensity) {
-    if (!session || busy) return;
-    setBusy(true);
-    const next = {
-      ...session,
-      events: session.events.map((e) =>
-        e.id === id ? { ...e, intensity } : e,
-      ),
-    };
-    setSession(next);
-    try {
-      if (!demo) await saveSession(next);
-    } catch {
-      setNotice(
-        "La intensidad se ha actualizado, pero no se ha podido guardar en este navegador.",
-      );
-    } finally {
-      setBusy(false);
     }
   }
   async function erase() {
@@ -1080,8 +1059,6 @@ export default function App() {
                 {session.events.length > 0 ? (
                   <EventExplorer
                     key={`events-${start}-${end}`}
-                    onIntensityChange={updateEventIntensity}
-                    saving={busy}
                     readings={filtered}
                     events={filteredEvents}
                     settings={settings}

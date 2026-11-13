@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import type { CgmEvent, EventIntensity, Reading, Settings } from "../types";
+import type { CgmEvent, Reading, Settings } from "../types";
 import { analyzeEvent, repeatedMedian } from "../lib/eventAnalysis";
 import { windowReadings } from "../lib/metrics";
 import { dateKey, dateLabel, MINUTE, stampLabel, timeLabel } from "../lib/time";
@@ -17,16 +17,12 @@ export function EventExplorer({
   settings,
   extent,
   typical,
-  onIntensityChange,
-  saving,
 }: {
   readings: Reading[];
   events: CgmEvent[];
   settings: Settings;
   extent: [number, number];
   typical: number;
-  onIntensityChange: (id: string, intensity?: EventIntensity) => void;
-  saving: boolean;
 }) {
   const [category, setCategory] = useState(""),
     [label, setLabel] = useState(""),
@@ -307,25 +303,7 @@ export function EventExplorer({
                     {e.label}
                   </button>
                 </td>
-                <td>
-                  <select
-                    aria-label={`Intensidad de ${e.label}, ${stampLabel(e.timestamp)}`}
-                    value={e.intensity || ""}
-                    disabled={saving}
-                    onChange={(change) =>
-                      onIntensityChange(
-                        e.id,
-                        (change.target.value || undefined) as
-                          EventIntensity | undefined,
-                      )
-                    }
-                  >
-                    <option value="">Sin indicar</option>
-                    <option value="suave">Suave</option>
-                    <option value="media">Media</option>
-                    <option value="alta">Alta</option>
-                  </select>
-                </td>
+                <td>{e.intensity || "Sin indicar"}</td>
                 <td>
                   {e.comment}
                   {e.durationMin !== undefined && (
